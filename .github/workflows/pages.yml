@@ -83,6 +83,10 @@ jobs:
           ./scripts/publish.sh
           echo "=== packages in jammy/amd64 ==="
           grep -E '^(Package|Version|Filename):' public/dists/jammy/main/binary-amd64/Packages || true
+          echo "=== pubkey ==="
+          ls -la public/repo-key.gpg public/repo-key.asc
+          test -s public/repo-key.gpg
+          head -1 public/repo-key.asc || true
           find public/dists public/pool -type f | sort | head -80
 
       - name: Setup Pages

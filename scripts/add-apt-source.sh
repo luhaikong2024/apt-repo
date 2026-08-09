@@ -13,16 +13,34 @@ ORIGIN_NAME="linux-apt-repo"
 
 [[ -n "${BASE_URL}" ]] || {
   echo "用法: $0 <仓库基址URL> [suite] [component]" >&2
-  echo "示例: $0 https://group.gitlab.io/linux_apt_repo jammy main" >&2
+  echo "示例: $0 https://luhaikong2024.github.io/apt-repo" >&2
   exit 1
 }
 
 BASE_URL="${BASE_URL%/}"
 KEYRING="/usr/share/keyrings/${ORIGIN_NAME}.gpg"
 LIST="/etc/apt/sources.list.d/${ORIGIN_NAME}.list"
+TMP_KEY="$(mktemp)"
+
+cleanup() { rm -f "${TMP_KEY}"; }
+trap cleanup EXIT
 
 echo "下载公钥 → ${KEYRING}"
-curl -fsSL "${BASE_URL}/repo-key.gpg" | gpg --dearmor | tee "${KEYRING}" >/dev/null
+# 优先 binary，失败再试 armored
+if ! curl -fsSL "${BASE_URL}/repo-key.gpg" -o "${TMP_KEY}" || [[ ! -s "${TMP_KEY}" ]]; then
+  curl -fsSL "${BASE_URL}/repo-key.asc" -o "${TMP_KEY}"
+fi
+[[ -s "${TMP_KEY}" ]] || {
+  echo "错误: 公钥下载失败或为空（检查 ${BASE_URL}/repo-key.gpg）" >&2
+  exit 1
+}
+
+# 已是 binary keyring 则直接用；否则 dearmor
+if grep -q 'BEGIN PGP PUBLIC KEY' "${TMP_KEY}"; then
+  gpg --dearmor <"${TMP_KEY}" >"${KEYRING}"
+else
+  cp -f "${TMP_KEY}" "${KEYRING}"
+fi
 chmod 644 "${KEYRING}"
 
 echo "写入源 → ${LIST}"

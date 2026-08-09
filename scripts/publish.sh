@@ -18,11 +18,41 @@ if [[ -d "${REPO_PATH}/pool" ]]; then
   cp -a "${REPO_PATH}/pool/." "${PUBLIC_PATH}/pool/"
 fi
 
-# 公钥与客户端脚本放到站点根
-if [[ -f "${GPG_PUBLIC_KEY_PATH}" ]]; then
-  cp -f "${GPG_PUBLIC_KEY_PATH}" "${PUBLIC_PATH}/repo-key.gpg"
+# 公钥放到站点根（同时提供 armored / binary，避免空文件或格式问题）
+export GNUPGHOME="${GPG_HOME_PATH}"
+KEY_ID="${SIGNING_KEY_ID}"
+if [[ -z "${KEY_ID}" ]] && [[ -d "${GPG_HOME_PATH}" ]]; then
+  KEY_ID="$(gpg --list-secret-keys --with-colons 2>/dev/null | awk -F: '/^sec:/ {print $5; exit}' || true)"
 fi
+if [[ -z "${KEY_ID}" ]] && [[ -f "${GPG_PUBLIC_KEY_PATH}" ]]; then
+  # 无私钥时，至少拷贝已有公钥文件
+  cp -f "${GPG_PUBLIC_KEY_PATH}" "${PUBLIC_PATH}/repo-key.asc"
+else
+  [[ -n "${KEY_ID}" ]] || die "无法导出公钥：缺少 SIGNING_KEY_ID / 私钥"
+  gpg --export --armor "${KEY_ID}" >"${PUBLIC_PATH}/repo-key.asc"
+  gpg --export "${KEY_ID}" >"${PUBLIC_PATH}/repo-key.gpg"
+fi
+# 兼容旧路径：repo-key.gpg 若为空则用 asc 转一份 binary
+if [[ ! -s "${PUBLIC_PATH}/repo-key.gpg" ]]; then
+  if [[ -s "${PUBLIC_PATH}/repo-key.asc" ]]; then
+    gpg --dearmor <"${PUBLIC_PATH}/repo-key.asc" >"${PUBLIC_PATH}/repo-key.gpg"
+  elif [[ -s "${GPG_PUBLIC_KEY_PATH}" ]]; then
+    if grep -q 'BEGIN PGP PUBLIC KEY' "${GPG_PUBLIC_KEY_PATH}"; then
+      gpg --dearmor <"${GPG_PUBLIC_KEY_PATH}" >"${PUBLIC_PATH}/repo-key.gpg"
+      cp -f "${GPG_PUBLIC_KEY_PATH}" "${PUBLIC_PATH}/repo-key.asc"
+    else
+      cp -f "${GPG_PUBLIC_KEY_PATH}" "${PUBLIC_PATH}/repo-key.gpg"
+    fi
+  else
+    die "公钥为空，拒绝发布"
+  fi
+fi
+[[ -s "${PUBLIC_PATH}/repo-key.gpg" ]] || die "repo-key.gpg 为空，拒绝发布"
+log "公钥大小: $(wc -c <"${PUBLIC_PATH}/repo-key.gpg") bytes"
+
 cp -f "${ROOT_DIR}/scripts/add-apt-source.sh" "${PUBLIC_PATH}/add-apt-source.sh"
+# 避免 GitHub Pages/Jekyll 误处理
+: >"${PUBLIC_PATH}/.nojekyll"
 
 # 简易说明页
 cat >"${PUBLIC_PATH}/index.html" <<EOF
