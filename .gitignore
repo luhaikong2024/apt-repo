@@ -26,3 +26,5 @@ packaging/*/debian/*.substvars
 packaging/*/debian/files
 packaging/*/debian/*/
 !packaging/*/debian/source/
+/keys/*.asc
+/.secret-export/

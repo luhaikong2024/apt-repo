@@ -105,19 +105,32 @@ make publish   # 同步到 public/
 
 也支持 `CMakeLists.txt` / `configure` / `Makefile`。产物会进入 `artifacts/toolchain/<suite>-<arch>/`，随后 `build-package.sh` 自动挂载进构建容器。
 
-## GitHub Pages（推荐）
+## 正式发布地址（GitHub Pages）
 
-已提供 `.github/workflows/pages.yml`。
+仓库：https://github.com/luhaikong2024/apt-repo  
 
-1. 把仓库推到 GitHub。
-2. **Settings → Pages → Source** 选 **GitHub Actions**。
-3. （推荐）**Settings → Secrets → Actions** 添加 `APT_REPO_GPG_PRIVATE_KEY`（ASCII 私钥），避免每次流水线生成新密钥。
-4. 推送到 `main`/`master`，或手动跑 workflow；成功后基址为：  
-   `https://<用户名>.github.io/<仓库名>/`
+源基址（Actions 部署成功后）：
 
-该 URL 下应能直接访问 `dists/`、`pool/`、`repo-key.gpg`。
+```text
+https://luhaikong2024.github.io/apt-repo/
+```
 
-源码就绪后，可在 Actions 里手动运行 workflow，并勾选「构建 .deb」。
+客户端一键添加：
+
+```bash
+curl -fsSL https://luhaikong2024.github.io/apt-repo/add-apt-source.sh \
+  | sudo bash -s -- https://luhaikong2024.github.io/apt-repo
+sudo apt install hello    # 当前示例包；之后换成你的包名
+```
+
+预置 `.deb` 放到 `incoming/<套件>/` 再 push，即可随 Pages 发布。
+
+### GitHub 设置清单
+
+1. **Settings → Pages → Source** = **GitHub Actions**
+2. **Settings → Secrets → Actions** 添加 `APT_REPO_GPG_PRIVATE_KEY`（本地已导出到 `.secret-export/`，勿提交）
+3. Actions 权限允许运行第三方 actions（deploy-pages 等）
+4. 推送 `main` 或手动 **Run workflow**
 
 ## GitLab CI（可选）
 
