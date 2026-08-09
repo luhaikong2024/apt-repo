@@ -82,8 +82,8 @@ sudo apt update</pre>
   <p>apt 会按本机架构自动访问 <code>binary-amd64</code> 或 <code>binary-arm64</code>。</p>
   <p>套件: ${SUITES}　组件: ${COMPONENTS}　架构: ${ARCHITECTURES}</p>
   <h2>路径一览</h2>
-  <pre>dists/&lt;focal|jammy|noble&gt;/main/binary-amd64/Packages.gz
-dists/&lt;focal|jammy|noble&gt;/main/binary-arm64/Packages.gz
+  <pre>dists/&lt;bionic|focal|jammy|noble&gt;/main/binary-amd64/Packages.gz
+dists/&lt;bionic|focal|jammy|noble&gt;/main/binary-arm64/Packages.gz
 pool/main/&lt;首字母&gt;/&lt;包名&gt;/&lt;包名&gt;_版本_amd64.deb
 pool/main/&lt;首字母&gt;/&lt;包名&gt;/&lt;包名&gt;_版本_arm64.deb</pre>
 </body>

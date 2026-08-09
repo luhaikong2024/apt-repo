@@ -1,6 +1,6 @@
 # linux_apt_repo
 
-私有 APT 仓库，采用与 Ubuntu 官方一致的 **`dists/` + `pool/`** 布局，并为多个发行版代号（focal / jammy / noble）分别构建与索引。
+私有 APT 仓库，采用与 Ubuntu 官方一致的 **`dists/` + `pool/`** 布局，并为多个发行版代号（bionic / focal / jammy / noble，即 18.04～24.04）分别构建与索引。
 
 > 不知道从哪看起？请先读 **[使用与原理说明.md](./使用与原理说明.md)**（目录怎么配合、工作原理、逐步怎么用）。
 

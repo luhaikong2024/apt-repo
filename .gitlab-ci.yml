@@ -63,6 +63,18 @@ prepare:keys:
     - when: manual
       allow_failure: true
 
+build:bionic:amd64:
+  <<: *build_suite_arch
+  variables:
+    SUITE: bionic
+    ARCH: amd64
+
+build:bionic:arm64:
+  <<: *build_suite_arch
+  variables:
+    SUITE: bionic
+    ARCH: arm64
+
 build:focal:amd64:
   <<: *build_suite_arch
   variables:
@@ -106,6 +118,12 @@ generate:repo:
   needs:
     - job: prepare:keys
       artifacts: true
+    - job: build:bionic:amd64
+      artifacts: true
+      optional: true
+    - job: build:bionic:arm64
+      artifacts: true
+      optional: true
     - job: build:focal:amd64
       artifacts: true
       optional: true
@@ -125,6 +143,7 @@ generate:repo:
       artifacts: true
       optional: true
   script:
+    - scripts/import-incoming.sh
     - scripts/generate-repo.sh
     - scripts/publish.sh
     - echo "=== layout ===" && find public/dists -type d | sort

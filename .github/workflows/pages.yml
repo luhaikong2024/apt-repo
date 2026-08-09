@@ -69,7 +69,7 @@ jobs:
           sudo systemctl start docker || true
           # 安装多架构仿真（arm64）
           docker run --privileged --rm tonistiigi/binfmt --install all || true
-          for suite in focal jammy noble; do
+          for suite in bionic focal jammy noble; do
             for arch in amd64 arm64; do
               ./scripts/build-package.sh "$suite" "$arch" || echo "skip $suite/$arch"
             done

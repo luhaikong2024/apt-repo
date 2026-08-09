@@ -4,6 +4,7 @@
 
 ```text
 incoming/
+├── bionic/*.deb   # Ubuntu 18.04
 ├── focal/*.deb    # Ubuntu 20.04
 ├── jammy/*.deb    # Ubuntu 22.04
 └── noble/*.deb    # Ubuntu 24.04

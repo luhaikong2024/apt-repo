@@ -2,8 +2,8 @@ Source: myapp
 Section: misc
 Priority: optional
 Maintainer: APT Repo Maintainers <apt-repo@localhost>
-Build-Depends: debhelper (>= 12), cmake, make, g++, pkg-config
-Standards-Version: 4.5.1
+Build-Depends: debhelper (>= 11), cmake, make, g++, pkg-config
+Standards-Version: 4.1.4
 Rules-Requires-Root: no
 
 Package: myapp
