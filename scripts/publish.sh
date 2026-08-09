@@ -71,12 +71,15 @@ cat >"${PUBLIC_PATH}/index.html" <<EOF
   <h1>${ORIGIN}</h1>
   <p>${DESCRIPTION}</p>
   <p>官方布局：<code>dists/</code> + <code>pool/</code></p>
-  <h2>添加软件源（示例）</h2>
-  <p>apt 会按本机架构自动访问 <code>dists/&lt;套件&gt;/main/binary-amd64</code> 或 <code>binary-arm64</code>。</p>
-  <pre>curl -fsSL https://YOUR_PAGES_URL/repo-key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/${ORIGIN}.gpg
-echo "deb [signed-by=/usr/share/keyrings/${ORIGIN}.gpg arch=\$(dpkg --print-architecture)] https://YOUR_PAGES_URL \$(lsb_release -cs) ${DEFAULT_COMPONENT}" | sudo tee /etc/apt/sources.list.d/${ORIGIN}.list
-sudo apt update
-sudo apt install ${PACKAGE_NAME}</pre>
+  <h2>添加软件源（先装公钥，再加源）</h2>
+  <pre>curl -fsSL https://luhaikong2024.github.io/apt-repo/add-apt-source.sh \\
+  | sudo bash -s -- https://luhaikong2024.github.io/apt-repo
+sudo apt install hello</pre>
+  <p>或手动：</p>
+  <pre>curl -fsSL https://luhaikong2024.github.io/apt-repo/repo-key.gpg | sudo tee /usr/share/keyrings/${ORIGIN}.gpg >/dev/null
+echo "deb [signed-by=/usr/share/keyrings/${ORIGIN}.gpg] https://luhaikong2024.github.io/apt-repo \$(lsb_release -cs) ${DEFAULT_COMPONENT}" | sudo tee /etc/apt/sources.list.d/${ORIGIN}.list
+sudo apt update</pre>
+  <p>apt 会按本机架构自动访问 <code>binary-amd64</code> 或 <code>binary-arm64</code>。</p>
   <p>套件: ${SUITES}　组件: ${COMPONENTS}　架构: ${ARCHITECTURES}</p>
   <h2>路径一览</h2>
   <pre>dists/&lt;focal|jammy|noble&gt;/main/binary-amd64/Packages.gz

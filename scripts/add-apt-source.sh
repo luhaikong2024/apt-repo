@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
-# 在客户端机器上添加本仓库（官方 sources 写法）
+# 正规流程：先安装公钥，再写入带 signed-by 的源
 # 用法:
-#   curl -fsSL https://YOUR_PAGES_URL/add-apt-source.sh | sudo bash -s -- https://YOUR_PAGES_URL
-# 或:
-#   sudo ./add-apt-source.sh https://YOUR_PAGES_URL [suite] [component]
+#   curl -fsSL https://luhaikong2024.github.io/apt-repo/add-apt-source.sh \
+#     | sudo bash -s -- https://luhaikong2024.github.io/apt-repo
 set -euo pipefail
 
 BASE_URL="${1:-}"
@@ -25,8 +24,7 @@ TMP_KEY="$(mktemp)"
 cleanup() { rm -f "${TMP_KEY}"; }
 trap cleanup EXIT
 
-echo "下载公钥 → ${KEYRING}"
-# 优先 binary，失败再试 armored
+echo "1/3 下载公钥 → ${KEYRING}"
 if ! curl -fsSL "${BASE_URL}/repo-key.gpg" -o "${TMP_KEY}" || [[ ! -s "${TMP_KEY}" ]]; then
   curl -fsSL "${BASE_URL}/repo-key.asc" -o "${TMP_KEY}"
 fi
@@ -35,7 +33,6 @@ fi
   exit 1
 }
 
-# 已是 binary keyring 则直接用；否则 dearmor
 if grep -q 'BEGIN PGP PUBLIC KEY' "${TMP_KEY}"; then
   gpg --dearmor <"${TMP_KEY}" >"${KEYRING}"
 else
@@ -43,8 +40,10 @@ else
 fi
 chmod 644 "${KEYRING}"
 
-echo "写入源 → ${LIST}"
+echo "2/3 写入源 → ${LIST}"
 echo "deb [signed-by=${KEYRING} arch=$(dpkg --print-architecture)] ${BASE_URL} ${SUITE} ${COMPONENT}" >"${LIST}"
+echo "  deb [signed-by=${KEYRING}] ${BASE_URL} ${SUITE} ${COMPONENT}"
 
+echo "3/3 apt update"
 apt-get update
 echo "完成。可安装: sudo apt install <包名>"

@@ -18,16 +18,28 @@
 | `public/` | 对外静态目录（GitHub / GitLab Pages） |
 | `keys/` | 公钥；私钥在 `keys/gnupg/`（勿提交） |
 
-## 客户端用法（官方写法）
-
-```text
-deb [signed-by=/usr/share/keyrings/linux-apt-repo.gpg] https://YOUR_PAGES_URL jammy main
-```
-
-一键添加（把 URL 换成你的 Pages 地址）：
+## 客户端用法（正规：先公钥，再加源）
 
 ```bash
-curl -fsSL https://YOUR_PAGES_URL/add-apt-source.sh | sudo bash -s -- https://YOUR_PAGES_URL
+curl -fsSL https://luhaikong2024.github.io/apt-repo/add-apt-source.sh \
+  | sudo bash -s -- https://luhaikong2024.github.io/apt-repo
+sudo apt install hello
+```
+
+手动等价步骤：
+
+```bash
+# 1. 安装公钥
+curl -fsSL https://luhaikong2024.github.io/apt-repo/repo-key.gpg \
+  | sudo tee /usr/share/keyrings/linux-apt-repo.gpg >/dev/null
+
+# 2. 添加源（signed-by 指向刚装的公钥）
+echo "deb [signed-by=/usr/share/keyrings/linux-apt-repo.gpg] https://luhaikong2024.github.io/apt-repo $(lsb_release -cs) main" \
+  | sudo tee /etc/apt/sources.list.d/linux-apt-repo.list
+
+# 3. 更新并安装
+sudo apt update
+sudo apt install hello
 ```
 
 APT 会请求例如：
@@ -115,7 +127,7 @@ make publish   # 同步到 public/
 https://luhaikong2024.github.io/apt-repo/
 ```
 
-客户端一键添加：
+客户端：
 
 ```bash
 curl -fsSL https://luhaikong2024.github.io/apt-repo/add-apt-source.sh \
