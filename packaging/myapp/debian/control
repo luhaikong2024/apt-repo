@@ -1,0 +1,14 @@
+Source: myapp
+Section: misc
+Priority: optional
+Maintainer: APT Repo Maintainers <apt-repo@localhost>
+Build-Depends: debhelper (>= 12), cmake, make, g++, pkg-config
+Standards-Version: 4.5.1
+Rules-Requires-Root: no
+
+Package: myapp
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: myapp package
+ Internal package built for the private APT repository.
+ Replace this description after placing real source in source/.

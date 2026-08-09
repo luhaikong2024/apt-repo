@@ -1,0 +1,9 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: @PACKAGE_NAME@
+Source: ./source
+
+Files: *
+Copyright: YEAR Your Name <you@example.com>
+License: proprietary
+ This package is for internal distribution.
+ Rewrite this file when you add real upstream source.

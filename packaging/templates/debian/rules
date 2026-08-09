@@ -1,0 +1,16 @@
+#!/usr/bin/make -f
+# 通用 debhelper 规则；可按 source/ 实际构建系统修改
+
+export DH_VERBOSE = 1
+
+%:
+	dh $@
+
+# 若源码根目录有 CMakeLists.txt，dh 会走 cmake
+# 若使用自定义构建，可覆盖如下目标：
+# override_dh_auto_configure:
+# 	./configure --prefix=/usr
+# override_dh_auto_build:
+# 	$(MAKE) -j$(nproc)
+# override_dh_auto_install:
+# 	$(MAKE) DESTDIR=$(CURDIR)/debian/@PACKAGE_NAME@ install

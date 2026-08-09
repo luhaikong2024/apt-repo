@@ -1,0 +1,3 @@
+# 只忽略私钥目录；公钥 repo-public.gpg 可提交
+gnupg/
+*.gpg.bin

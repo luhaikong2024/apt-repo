@@ -1,0 +1,148 @@
+# GitLab CI：多套件 × 多架构构建 → 官方布局仓库 → Pages 发布
+# 需要 Runner 支持 Docker（docker-in-docker）；arm64 构建需 qemu/binfmt 或 ARM Runner
+
+stages:
+  - prepare
+  - build
+  - repo
+  - deploy
+
+variables:
+  DOCKER_TLS_CERTDIR: "/certs"
+  GIT_SUBMODULE_STRATEGY: none
+
+.prepare_gpg: &prepare_gpg
+  before_script:
+    - apt-get update && apt-get install -y --no-install-recommends gnupg gzip xz-utils dpkg-dev apt-utils ca-certificates
+    - |
+      if [ -n "${APT_REPO_GPG_PRIVATE_KEY:-}" ]; then
+        mkdir -p keys/gnupg && chmod 700 keys/gnupg
+        export GNUPGHOME="$CI_PROJECT_DIR/keys/gnupg"
+        echo "$APT_REPO_GPG_PRIVATE_KEY" | gpg --batch --import
+        scripts/init-gpg.sh || true
+      elif [ ! -f keys/gnupg/pubring.kbx ] && [ ! -f keys/gnupg/secring.gpg ]; then
+        scripts/init-gpg.sh
+      fi
+
+prepare:keys:
+  stage: prepare
+  image: ubuntu:22.04
+  <<: *prepare_gpg
+  script:
+    - scripts/init-gpg.sh
+  artifacts:
+    paths:
+      - keys/
+      - conf/repo.conf
+    expire_in: 1 week
+
+.build_suite_arch: &build_suite_arch
+  stage: build
+  image: docker:24
+  services:
+    - docker:24-dind
+  needs: ["prepare:keys"]
+  script:
+    - apk add --no-cache bash dpkg curl
+    - docker run --privileged --rm tonistiigi/binfmt --install all || true
+    - scripts/build-package.sh "$SUITE" "$ARCH"
+  artifacts:
+    paths:
+      - artifacts/debs/
+      - repo/
+    expire_in: 1 week
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+      changes:
+        - source/**/*
+        - packaging/**/*
+        - scripts/**/*
+        - conf/**/*
+        - docker/**/*
+      when: on_success
+    - when: manual
+      allow_failure: true
+
+build:focal:amd64:
+  <<: *build_suite_arch
+  variables:
+    SUITE: focal
+    ARCH: amd64
+
+build:focal:arm64:
+  <<: *build_suite_arch
+  variables:
+    SUITE: focal
+    ARCH: arm64
+
+build:jammy:amd64:
+  <<: *build_suite_arch
+  variables:
+    SUITE: jammy
+    ARCH: amd64
+
+build:jammy:arm64:
+  <<: *build_suite_arch
+  variables:
+    SUITE: jammy
+    ARCH: arm64
+
+build:noble:amd64:
+  <<: *build_suite_arch
+  variables:
+    SUITE: noble
+    ARCH: amd64
+
+build:noble:arm64:
+  <<: *build_suite_arch
+  variables:
+    SUITE: noble
+    ARCH: arm64
+
+generate:repo:
+  stage: repo
+  image: ubuntu:22.04
+  <<: *prepare_gpg
+  needs:
+    - job: prepare:keys
+      artifacts: true
+    - job: build:focal:amd64
+      artifacts: true
+      optional: true
+    - job: build:focal:arm64
+      artifacts: true
+      optional: true
+    - job: build:jammy:amd64
+      artifacts: true
+      optional: true
+    - job: build:jammy:arm64
+      artifacts: true
+      optional: true
+    - job: build:noble:amd64
+      artifacts: true
+      optional: true
+    - job: build:noble:arm64
+      artifacts: true
+      optional: true
+  script:
+    - scripts/generate-repo.sh
+    - scripts/publish.sh
+    - echo "=== layout ===" && find public/dists -type d | sort
+  artifacts:
+    paths:
+      - public/
+      - repo/
+    expire_in: 1 week
+
+pages:
+  stage: deploy
+  image: alpine:3.20
+  needs: ["generate:repo"]
+  script:
+    - echo "Publishing public/ to GitLab Pages"
+    - ls -la public && find public/dists -type d | sort || true
+  artifacts:
+    paths:
+      - public
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'

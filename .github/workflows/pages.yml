@@ -1,0 +1,95 @@
+# GitHub Actions：构建（可选）→ 生成官方 APT 仓库 → 发布到 GitHub Pages
+#
+# 仓库设置：
+#   Settings → Pages → Build and deployment → Source = GitHub Actions
+# 建议 Secrets：
+#   APT_REPO_GPG_PRIVATE_KEY = 签名用 ASCII 私钥（gpg --export-secret-keys --armor）
+
+name: apt-repo-pages
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+    inputs:
+      build_packages:
+        description: "是否尝试从 source/ 构建 .deb（需 Docker）"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+env:
+  DEBIAN_FRONTEND: noninteractive
+
+jobs:
+  # 仅生成/签名仓库并发布（源码未就绪时也能把 dists 骨架挂出去）
+  publish:
+    runs-on: ubuntu-22.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            gnupg gzip xz-utils dpkg-dev apt-utils ca-certificates make
+
+      - name: Import or init GPG key
+        env:
+          APT_REPO_GPG_PRIVATE_KEY: ${{ secrets.APT_REPO_GPG_PRIVATE_KEY }}
+        run: |
+          mkdir -p keys/gnupg
+          chmod 700 keys/gnupg
+          export GNUPGHOME="$GITHUB_WORKSPACE/keys/gnupg"
+          if [ -n "${APT_REPO_GPG_PRIVATE_KEY:-}" ]; then
+            echo "$APT_REPO_GPG_PRIVATE_KEY" | gpg --batch --import
+            KEY_ID="$(gpg --list-secret-keys --with-colons | awk -F: '/^sec:/ {print $5; exit}')"
+            sed -i "s/^SIGNING_KEY_ID=.*/SIGNING_KEY_ID=\"${KEY_ID}\"/" conf/repo.conf
+            gpg --export --armor "$KEY_ID" > keys/repo-public.gpg
+          else
+            ./scripts/init-gpg.sh
+          fi
+
+      - name: Optional package builds
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.build_packages }}
+        run: |
+          sudo apt-get install -y docker.io
+          sudo systemctl start docker || true
+          # 安装多架构仿真（arm64）
+          docker run --privileged --rm tonistiigi/binfmt --install all || true
+          for suite in focal jammy noble; do
+            for arch in amd64 arm64; do
+              ./scripts/build-package.sh "$suite" "$arch" || echo "skip $suite/$arch"
+            done
+          done
+
+      - name: Generate official repo layout
+        run: |
+          export GNUPGHOME="$GITHUB_WORKSPACE/keys/gnupg"
+          ./scripts/generate-repo.sh
+          ./scripts/publish.sh
+          find public/dists -type d | sort
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,28 @@
+# 构建与产物
+/build/
+/artifacts/
+/repo/.cache/
+/repo/pool/
+/repo/dists/
+/repo/.meta/
+/public/
+
+# GPG 私钥目录（切勿提交）
+/keys/gnupg/
+*.gpg.bin
+
+# 编辑器 / 系统
+*.swp
+*.swo
+*~
+.DS_Store
+.idea/
+.vscode/
+
+# Debian 打包中间文件
+packaging/*/debian/.debhelper/
+packaging/*/debian/*.debhelper.log
+packaging/*/debian/*.substvars
+packaging/*/debian/files
+packaging/*/debian/*/
+!packaging/*/debian/source/
