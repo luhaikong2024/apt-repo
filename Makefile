@@ -1,32 +1,22 @@
-# 常用入口（官方 dists/ + pool/ 仓库）
-
-.PHONY: help gpg bootstrap toolchain package all repo publish clean
+.PHONY: help gpg import repo publish all clean
 
 help:
-	@echo "目标:"
-	@echo "  make gpg          初始化 GPG 签名密钥"
-	@echo "  make bootstrap    生成 packaging/<包名>/debian"
-	@echo "  make toolchain S=jammy A=amd64|arm64"
-	@echo "  make package   S=jammy A=amd64|arm64"
-	@echo "  make all          构建全部套件×架构并发布到 public/"
-	@echo "  make repo         生成官方 dists 路径（含 amd64/arm64）并签名"
-	@echo "  make publish      同步到 public/"
-	@echo "  make clean        清理产物（不删源码与密钥）"
+	@echo "apt-repo — APT 包管理与 GitHub Pages 分发"
+	@echo ""
+	@echo "  make gpg       初始化 / 检查签名密钥"
+	@echo "  make import    导入 incoming/<套件>/*.deb"
+	@echo "  make repo      生成 dists/ 索引并签名"
+	@echo "  make publish   同步到 public/"
+	@echo "  make all       import + repo + publish"
+	@echo "  make clean     清理生成产物"
+	@echo ""
+	@echo "编包请到私有仓 apt-repo-toolchain，再用 make sync-publish 推过来。"
 
 gpg:
 	./scripts/init-gpg.sh
 
-bootstrap:
-	./scripts/bootstrap-packaging.sh
-
-toolchain:
-	./scripts/build-toolchain.sh "$(S)" "$(or $(A),amd64)"
-
-package:
-	./scripts/build-package.sh "$(S)" "$(or $(A),amd64)"
-
-all:
-	./scripts/build-all.sh
+import:
+	./scripts/import-incoming.sh
 
 repo:
 	./scripts/generate-repo.sh
@@ -34,5 +24,9 @@ repo:
 publish:
 	./scripts/publish.sh
 
+all: import
+	./scripts/generate-repo.sh
+	./scripts/publish.sh
+
 clean:
-	rm -rf artifacts build public/dists public/pool repo/pool repo/dists repo/.meta repo/.cache
+	rm -rf repo/pool repo/dists repo/.meta repo/.cache public/dists public/pool

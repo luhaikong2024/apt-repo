@@ -1,5 +1,0 @@
-myapp (@PACKAGE_VERSION@) @SUITE@; urgency=medium
-
-  * Release built for @SUITE@.
-
- -- APT Repo Maintainers <apt-repo@localhost>  @DATE@

@@ -1,4 +1,4 @@
-# 构建与产物
+# 构建与产物（勿提交）
 /build/
 /artifacts/
 /repo/.cache/
@@ -7,8 +7,10 @@
 /repo/.meta/
 /public/
 
-# GPG 私钥目录（切勿提交）
+# GPG 私钥（勿提交）
 /keys/gnupg/
+/keys/*.asc
+/.secret-export/
 *.gpg.bin
 
 # 编辑器 / 系统
@@ -26,5 +28,3 @@ packaging/*/debian/*.substvars
 packaging/*/debian/files
 packaging/*/debian/*/
 !packaging/*/debian/source/
-/keys/*.asc
-/.secret-export/

@@ -1,21 +1,10 @@
-# GitHub Actions：构建（可选）→ 生成官方 APT 仓库 → 发布到 GitHub Pages
-#
-# 仓库设置：
-#   Settings → Pages → Build and deployment → Source = GitHub Actions
-# 建议 Secrets：
-#   APT_REPO_GPG_PRIVATE_KEY = 签名用 ASCII 私钥（gpg --export-secret-keys --armor）
-
+# 仅分发：导入 incoming → 生成官方仓库 → GitHub Pages
 name: apt-repo-pages
 
 on:
   push:
     branches: [main, master]
   workflow_dispatch:
-    inputs:
-      build_packages:
-        description: "是否尝试从 source/ 构建 .deb（需 Docker）"
-        type: boolean
-        default: false
 
 permissions:
   contents: read
@@ -30,21 +19,19 @@ env:
   DEBIAN_FRONTEND: noninteractive
 
 jobs:
-  # 仅生成/签名仓库并发布（源码未就绪时也能把 dists 骨架挂出去）
   publish:
     runs-on: ubuntu-22.04
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Install tools
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            gnupg gzip xz-utils dpkg-dev apt-utils ca-certificates make
+            gnupg gzip xz-utils dpkg-dev apt-utils ca-certificates
 
       - name: Import or init GPG key
         env:
@@ -62,41 +49,22 @@ jobs:
             ./scripts/init-gpg.sh
           fi
 
-      - name: Optional package builds
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.build_packages }}
-        run: |
-          sudo apt-get install -y docker.io
-          sudo systemctl start docker || true
-          # 安装多架构仿真（arm64）
-          docker run --privileged --rm tonistiigi/binfmt --install all || true
-          for suite in bionic focal jammy noble; do
-            for arch in amd64 arm64; do
-              ./scripts/build-package.sh "$suite" "$arch" || echo "skip $suite/$arch"
-            done
-          done
-
-      - name: Import incoming packages and publish
+      - name: Import incoming and publish
         run: |
           export GNUPGHOME="$GITHUB_WORKSPACE/keys/gnupg"
           ./scripts/import-incoming.sh
           ./scripts/generate-repo.sh
           ./scripts/publish.sh
-          echo "=== packages in jammy/amd64 ==="
-          grep -E '^(Package|Version|Filename):' public/dists/jammy/main/binary-amd64/Packages || true
-          echo "=== pubkey ==="
           ls -la public/repo-key.gpg public/repo-key.asc
           test -s public/repo-key.gpg
-          head -1 public/repo-key.asc || true
-          find public/dists public/pool -type f | sort | head -80
+          find public/dists -type d | sort
+          grep -E '^(Package|Version|Filename):' public/dists/jammy/main/binary-amd64/Packages || true
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
+      - uses: actions/configure-pages@v5
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v3
         with:
           path: public
 
-      - name: Deploy to GitHub Pages
-        id: deployment
+      - id: deployment
         uses: actions/deploy-pages@v4

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 公共函数与配置加载
+# 公共函数与配置加载（APT 分发仓）
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -32,16 +32,12 @@ pool_subdir_for_package() {
   echo "${first}/${name}"
 }
 
-deb_version_for_suite() {
-  local base_version="$1"
-  local suite="$2"
-  echo "${base_version}~${suite}1"
-}
-
 ensure_dirs() {
   mkdir -p "${REPO_PATH}/pool" "${REPO_PATH}/dists" "${REPO_PATH}/.cache"
   mkdir -p "${PUBLIC_PATH}" "${GPG_HOME_PATH}" "${ROOT_DIR}/keys"
-  mkdir -p "${ROOT_DIR}/build" "${ROOT_DIR}/artifacts"
+  for suite in ${SUITES}; do
+    mkdir -p "${ROOT_DIR}/incoming/${suite}"
+  done
 }
 
 suite_valid() {
@@ -60,20 +56,8 @@ arch_valid() {
   return 1
 }
 
-# Debian 架构名 → Docker/OCI platform
-docker_platform_for_arch() {
-  case "$1" in
-    amd64) echo "linux/amd64" ;;
-    arm64) echo "linux/arm64" ;;
-    armhf) echo "linux/arm/v7" ;;
-    i386)  echo "linux/386" ;;
-    *) die "未知架构，无法映射 Docker platform: $1" ;;
-  esac
-}
-
-# 预创建官方布局空目录（dists 索引由 generate-repo 填充；pool 按需长出）
 ensure_official_layout() {
-  local suite component arch letter
+  local suite component arch
   ensure_dirs
   for suite in ${SUITES}; do
     for component in ${COMPONENTS}; do
@@ -81,7 +65,6 @@ ensure_official_layout() {
         mkdir -p "${REPO_PATH}/dists/${suite}/${component}/binary-${arch}"
         mkdir -p "${PUBLIC_PATH}/dists/${suite}/${component}/binary-${arch}"
       done
-      # pool 官方路径：pool/<component>/<首字母或 lib*>/<pkg>/
       mkdir -p "${REPO_PATH}/pool/${component}"
       mkdir -p "${PUBLIC_PATH}/pool/${component}"
     done

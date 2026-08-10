@@ -1,13 +1,20 @@
 # incoming/
 
-把要正式发布的 `.deb` 放进对应套件目录，推送到 GitHub 后，Actions 会自动导入并发布到 Pages。
+按套件放入要发布的 `.deb`：
 
 ```text
 incoming/
-├── bionic/*.deb   # Ubuntu 18.04
-├── focal/*.deb    # Ubuntu 20.04
-├── jammy/*.deb    # Ubuntu 22.04
-└── noble/*.deb    # Ubuntu 24.04
+├── bionic/*.deb
+├── focal/*.deb
+├── jammy/*.deb
+└── noble/*.deb
 ```
 
-当前示例：`jammy/hello_2.10-2ubuntu4_amd64.deb`（轻量测试包）。
+推荐从构建仓同步，而不是手拷：
+
+```bash
+# 在 apt-repo-toolchain 中
+make sync          # 或 make sync-publish
+```
+
+本仓执行 `make all` 或 push 触发 Actions，即可更新 Pages。
