@@ -9,7 +9,7 @@ https://github.com/luhaikong2024/apt-repo-toolchain
 
 | 仓库 | 做什么 |
 |------|--------|
-| [apt-repo-toolchain](https://github.com/luhaikong2024/apt-repo-toolchain)（私有） | 源码、工具链、Docker 编出 `.deb` |
+| [apt-repo-toolchain](https://github.com/luhaikong2024/apt-repo-toolchain)（私有） | 源码、工具链、本地交叉编出 `.deb` |
 | **本仓 apt-repo**（公开 Pages） | `incoming/` → 索引签名 → Pages |
 
 ## 目录
