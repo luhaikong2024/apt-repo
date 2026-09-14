@@ -72,13 +72,18 @@ cat >"${PUBLIC_PATH}/index.html" <<EOF
   <p>${DESCRIPTION}</p>
   <p>官方布局：<code>dists/</code> + <code>pool/</code></p>
   <h2>添加软件源（先装公钥，再加源）</h2>
-  <pre>curl -fsSL https://luhaikong2024.github.io/apt-repo/add-apt-source.sh \\
-  | sudo bash -s -- https://luhaikong2024.github.io/apt-repo
-sudo apt install hello</pre>
+  <pre id="cmd-auto">正在根据本页地址生成命令…</pre>
   <p>或手动：</p>
-  <pre>curl -fsSL https://luhaikong2024.github.io/apt-repo/repo-key.gpg | sudo tee /usr/share/keyrings/${ORIGIN}.gpg >/dev/null
-echo "deb [signed-by=/usr/share/keyrings/${ORIGIN}.gpg] https://luhaikong2024.github.io/apt-repo \$(lsb_release -cs) ${DEFAULT_COMPONENT}" | sudo tee /etc/apt/sources.list.d/${ORIGIN}.list
-sudo apt update</pre>
+  <pre id="cmd-manual"></pre>
+  <script>
+    const base = (location.origin + location.pathname).replace(/\\/index\\.html$/, "").replace(/\\/$/, "");
+    document.getElementById("cmd-auto").textContent =
+      "curl -fsSL " + base + "/add-apt-source.sh \\\\\\n  | sudo bash -s -- " + base + "\\nsudo apt install <包名>";
+    document.getElementById("cmd-manual").textContent =
+      "curl -fsSL " + base + "/repo-key.gpg | sudo tee /usr/share/keyrings/${ORIGIN}.gpg >/dev/null\\n" +
+      "echo \\"deb [signed-by=/usr/share/keyrings/${ORIGIN}.gpg] " + base + " \$(lsb_release -cs) ${DEFAULT_COMPONENT}\\" | sudo tee /etc/apt/sources.list.d/${ORIGIN}.list\\n" +
+      "sudo apt update";
+  </script>
   <p>apt 会按本机架构自动访问 <code>binary-amd64</code> 或 <code>binary-arm64</code>。</p>
   <p>套件: ${SUITES}　组件: ${COMPONENTS}　架构: ${ARCHITECTURES}</p>
   <h2>路径一览</h2>

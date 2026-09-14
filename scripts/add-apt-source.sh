@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # 正规流程：先安装公钥，再写入带 signed-by 的源
 # 用法:
-#   curl -fsSL https://luhaikong2024.github.io/apt-repo/add-apt-source.sh \
-#     | sudo bash -s -- https://luhaikong2024.github.io/apt-repo
+#   curl -fsSL https://ti5-lhk-0262.github.io/apt-repo/add-apt-source.sh \
+#     | sudo bash -s -- https://ti5-lhk-0262.github.io/apt-repo
 set -euo pipefail
 
 BASE_URL="${1:-}"
@@ -12,7 +12,7 @@ ORIGIN_NAME="linux-apt-repo"
 
 [[ -n "${BASE_URL}" ]] || {
   echo "用法: $0 <仓库基址URL> [suite] [component]" >&2
-  echo "示例: $0 https://luhaikong2024.github.io/apt-repo" >&2
+  echo "示例: $0 https://ti5-lhk-0262.github.io/apt-repo" >&2
   exit 1
 }
 

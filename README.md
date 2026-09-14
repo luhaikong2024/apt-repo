@@ -35,13 +35,16 @@ git add incoming && git commit -m "release debs" && git push
 ## 客户端
 
 ```bash
-curl -fsSL https://luhaikong2024.github.io/apt-repo/add-apt-source.sh \
-  | sudo bash -s -- https://luhaikong2024.github.io/apt-repo
+curl -fsSL https://ti5-lhk-0262.github.io/apt-repo/add-apt-source.sh \
+  | sudo bash -s -- https://ti5-lhk-0262.github.io/apt-repo
 sudo apt install <包名>
 ```
+
+个人号镜像仍可用：https://luhaikong2024.github.io/apt-repo/
 
 ## GitHub Pages
 
 1. Settings → Pages → Source = **GitHub Actions**  
 2. Secret：`APT_REPO_GPG_PRIVATE_KEY`（私钥备份见私有仓 apt-repo-key）  
-3. 地址：https://luhaikong2024.github.io/apt-repo/
+3. 公司号地址：https://ti5-lhk-0262.github.io/apt-repo/  
+4. 个人号地址：https://luhaikong2024.github.io/apt-repo/
